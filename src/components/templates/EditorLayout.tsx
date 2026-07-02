@@ -147,20 +147,6 @@ function triggerWordDownload(html: string, title: string) {
 
 /* ── NavBar ─────────────────────────────────────────────────────────────── */
 
-const STATIC_ITEMS_RIGHT = ["Formato", "Ayuda"];
-
-function NavButton({ label }: { label: string }) {
-  return (
-    <button
-      className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-colors whitespace-nowrap"
-      style={{ color: "#173B6C" }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#D8E2FA")}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-    >
-      {label}
-    </button>
-  );
-}
 
 function NavBar({ onRename, docName }: { onRename: () => void; docName: string }) {
   const editor = useEditorContext();
@@ -234,9 +220,6 @@ function NavBar({ onRename, docName }: { onRename: () => void; docName: string }
         ]}
       />
 
-      {STATIC_ITEMS_RIGHT.map((item) => (
-        <NavButton key={item} label={item} />
-      ))}
     </nav>
   );
 }

@@ -19,6 +19,8 @@ interface PageSettingsCtxType {
   setPanelOpen: (v: boolean) => void;
 }
 
+const MARGIN_MIN = 5; // mm — ningún margen puede ser menor a esto
+
 const DEFAULTS: PageSettings = {
   marginTop: 25,
   marginBottom: 25,
@@ -40,8 +42,13 @@ export function PageSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<PageSettings>(DEFAULTS);
   const [panelOpen, setPanelOpen] = useState(false);
 
-  const update = (patch: Partial<PageSettings>) =>
-    setSettings((prev) => ({ ...prev, ...patch }));
+  const update = (patch: Partial<PageSettings>) => {
+    const safe = { ...patch };
+    for (const key of ["marginTop", "marginBottom", "marginLeft", "marginRight"] as const) {
+      if (key in safe) safe[key] = Math.max(MARGIN_MIN, safe[key] as number);
+    }
+    setSettings((prev) => ({ ...prev, ...safe }));
+  };
 
   return (
     <PageSettingsCtx.Provider value={{ settings, update, panelOpen, setPanelOpen }}>

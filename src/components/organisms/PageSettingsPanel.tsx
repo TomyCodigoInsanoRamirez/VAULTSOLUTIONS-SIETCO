@@ -52,10 +52,10 @@ function MarginInput({
         <input
           type="number"
           min={5}
-          max={100}
+          max={30}
           value={value}
           onChange={(e) =>
-            onChange(Math.max(5, Math.min(100, Number(e.target.value))))
+            onChange(Math.max(5, Math.min(30, Number(e.target.value))))
           }
           className="w-14 h-7 text-sm text-center rounded border focus:outline-none"
           style={{ color: "#173B6C", backgroundColor: "#EEF2FF", borderColor: "#D8E2FA" }}

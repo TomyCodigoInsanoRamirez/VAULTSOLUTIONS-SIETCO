@@ -39,7 +39,12 @@ const PAGE_GAP = 24;
 
 let spacerSyncing = false;
 
-function syncSpacers(editor: Editor, pageWrapper: HTMLElement): void {
+function syncSpacers(
+  editor: Editor,
+  pageWrapper: HTMLElement,
+  marginTopMm: number,
+  marginBottomMm: number,
+): void {
   if (spacerSyncing) return;
 
   const { state } = editor;
@@ -92,6 +97,9 @@ function syncSpacers(editor: Editor, pageWrapper: HTMLElement): void {
   });
 
   // ── Calculate needed spacers ──────────────────────────────────────────
+  const mTop = marginTopMm    * MM; // px
+  const mBot = marginBottomMm * MM; // px
+
   const neededSpacers: Array<{
     originalDocPos: number;
     naturalDocPos:  number;
@@ -100,17 +108,26 @@ function syncSpacers(editor: Editor, pageWrapper: HTMLElement): void {
   let addedH = 0;
 
   for (const { originalDocPos, naturalDocPos, naturalTop, h } of contentBlocks) {
-    const y         = naturalTop + addedH;
-    const pi        = Math.floor(y / (A4_H + PAGE_GAP));
-    const pageEnd   = pi       * (A4_H + PAGE_GAP) + A4_H;
-    const nextStart = (pi + 1) * (A4_H + PAGE_GAP);
+    const y  = naturalTop + addedH;
+    const pi = Math.floor(y / (A4_H + PAGE_GAP));
+
+    // Bottom of the writable area of page pi (before bottom margin)
+    const pageEnd   = pi       * (A4_H + PAGE_GAP) + A4_H - mBot;
+    // Top of the writable area of page pi+1 (after top margin)
+    const nextStart = (pi + 1) * (A4_H + PAGE_GAP) + mTop;
+    // Top of the writable area of the current page (only relevant for pi > 0,
+    // because page 0's offset is already baked in by the header + padding)
+    const pageWritableTop = pi > 0 ? pi * (A4_H + PAGE_GAP) + mTop : 0;
 
     let push = 0;
-    if (y >= pageEnd) {
-      // block starts in the gap → slide to next page
+    if (pi > 0 && y < pageWritableTop) {
+      // block landed in the top-margin zone of this page → push to writable area
+      push = pageWritableTop - y;
+    } else if (y >= pageEnd) {
+      // block starts in the bottom margin, gray gap, or top margin → next page
       push = nextStart - y;
     } else if (y + h > pageEnd && h < A4_H) {
-      // block crosses boundary and fits on one page → push whole block
+      // block crosses the bottom margin (fits on one page) → push whole block
       push = nextStart - y;
     }
 
@@ -305,6 +322,21 @@ export default function DocumentCanvas() {
 
   const [contentH, setContentH] = useState(A4_H);
 
+  // Ref so event handlers (registered once) always read the latest margins
+  const settingsRef = useRef(settings);
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  // Convenience: call syncSpacers with the current margins from the ref
+  const sync = () => {
+    if (!editor || !pageWrapRef.current) return;
+    syncSpacers(
+      editor,
+      pageWrapRef.current,
+      settingsRef.current.marginTop,
+      settingsRef.current.marginBottom,
+    );
+  };
+
   /* ── Track content height for dynamic page count ── */
   useEffect(() => {
     const el = contentRef.current;
@@ -318,47 +350,36 @@ export default function DocumentCanvas() {
 
   /* ── Sync spacers after every TipTap DOM update ──
         editor.on('update') fires synchronously AFTER ProseMirror has written
-        the new content to the DOM but BEFORE the browser paints.
-        syncSpacers dispatches its own transaction (flagged so it doesn't
-        re-trigger this handler), making the spacer nodes persistent across
-        future keystrokes. ── */
+        the new content to the DOM but BEFORE the browser paints. ── */
   useEffect(() => {
     if (!editor) return;
-    const handle = () => {
-      if (!pageWrapRef.current) return;
-      syncSpacers(editor, pageWrapRef.current);
-    };
+    const handle = () => sync();
     editor.on("update", handle);
     editor.on("create", handle);
     return () => {
       editor.off("update", handle);
       editor.off("create", handle);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
   /* ── Re-sync when margins/settings change ── */
   useLayoutEffect(() => {
-    if (!editor || !pageWrapRef.current) return;
-    syncSpacers(editor, pageWrapRef.current);
+    sync();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
 
   /* ── Re-sync on window resize (different line-wrapping → different heights) ── */
   useEffect(() => {
-    const handle = () => {
-      if (!editor || !pageWrapRef.current) return;
-      syncSpacers(editor, pageWrapRef.current);
-    };
+    const handle = () => sync();
     window.addEventListener("resize", handle);
     return () => window.removeEventListener("resize", handle);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
   /* ── Initial run after hydration (editor takes a frame to mount) ── */
   useEffect(() => {
-    const id = setTimeout(() => {
-      if (!editor || !pageWrapRef.current) return;
-      syncSpacers(editor, pageWrapRef.current);
-    }, 150);
+    const id = setTimeout(() => sync(), 150);
     return () => clearTimeout(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

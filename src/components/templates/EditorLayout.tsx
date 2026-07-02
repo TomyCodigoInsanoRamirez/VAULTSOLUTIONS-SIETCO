@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { EditorProvider } from "@/context/EditorContext";
-import { PageSettingsProvider } from "@/context/PageSettingsContext";
+import { PageSettingsProvider, usePageSettings } from "@/context/PageSettingsContext";
 import { SearchProvider, useSearch } from "@/context/SearchContext";
 import { ImagesProvider, useImages } from "@/context/ImagesContext";
 import Toolbar from "@/components/organisms/Toolbar";
@@ -23,39 +23,87 @@ function getCleanHtml(editorHtml: string): string {
   return tmp.innerHTML;
 }
 
-// Abre una ventana limpia con el contenido y dispara el diálogo de impresión
-// (el usuario elige "Guardar como PDF" en el diálogo del sistema)
-function triggerPdfDownload(html: string, title: string) {
-  const win = window.open("", "_blank");
-  if (!win) return;
-  win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>${title}</title>
-  <style>
-    @page { size: A4 portrait; margin: 25mm 30mm; }
-    * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; font-size: 12pt; color: #000; margin: 0; }
-    p  { margin: 0 0 3px; }
-    h1 { font-size: 2em;    font-weight: bold; margin: 8px 0; }
-    h2 { font-size: 1.5em;  font-weight: bold; margin: 6px 0; }
-    h3 { font-size: 1.17em; font-weight: bold; margin: 5px 0; }
-    ul { list-style-type: disc;    padding-left: 1.5rem; margin: 4px 0; }
-    ol { list-style-type: decimal; padding-left: 1.5rem; margin: 4px 0; }
-    li { margin: 2px 0; }
-    img    { max-width: 100%; height: auto; }
-    strong { font-weight: bold; }
-    em     { font-style: italic; }
-    u      { text-decoration: underline; }
-  </style>
-</head>
-<body>${html}</body>
-</html>`);
-  win.document.close();
-  win.focus();
-  // Pequeño delay para que el navegador termine de pintar antes de imprimir
-  setTimeout(() => { win.print(); win.close(); }, 300);
+// Renderiza el HTML en un div oculto, lo captura con html2canvas y genera
+// un PDF de varias páginas A4 que se descarga directamente sin diálogo.
+async function triggerPdfDownload(
+  html: string,
+  title: string,
+  marginTopMm: number,
+  marginBottomMm: number,
+  marginLeftMm: number,
+  marginRightMm: number,
+) {
+  const MM = 3.7795; // px por mm a 96 dpi
+
+  // Contenedor oculto con el ancho y padding exactos de una hoja A4
+  const container = document.createElement("div");
+  Object.assign(container.style, {
+    position:   "fixed",
+    top:        "-99999px",
+    left:       "-99999px",
+    width:      "794px",
+    background: "#ffffff",
+    fontFamily: "Arial, sans-serif",
+    fontSize:   "12pt",
+    color:      "#000",
+    lineHeight: "1.5",
+    paddingTop:    `${marginTopMm    * MM}px`,
+    paddingBottom: `${marginBottomMm * MM}px`,
+    paddingLeft:   `${marginLeftMm   * MM}px`,
+    paddingRight:  `${marginRightMm  * MM}px`,
+  });
+  container.innerHTML = `
+    <style>
+      p  { margin: 0 0 3px; }
+      h1 { font-size: 2em;    font-weight: bold; margin: 8px 0; }
+      h2 { font-size: 1.5em;  font-weight: bold; margin: 6px 0; }
+      h3 { font-size: 1.17em; font-weight: bold; margin: 5px 0; }
+      ul { list-style-type: disc;    padding-left: 1.5rem; margin: 4px 0; }
+      ol { list-style-type: decimal; padding-left: 1.5rem; margin: 4px 0; }
+      li { margin: 2px 0; }
+      img    { max-width: 100%; height: auto; }
+      strong { font-weight: bold; }
+      em     { font-style: italic; }
+      u      { text-decoration: underline; }
+    </style>
+    ${html}`;
+  document.body.appendChild(container);
+
+  try {
+    const { default: html2canvas } = await import("html2canvas");
+    const { jsPDF }                = await import("jspdf");
+
+    const canvas = await html2canvas(container, {
+      scale:           2,
+      useCORS:         true,
+      backgroundColor: "#ffffff",
+    });
+
+    const imgData  = canvas.toDataURL("image/jpeg", 0.92);
+    const pdf      = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW    = 210; // mm
+    const pageH    = 297; // mm
+    const imgH     = (canvas.height / canvas.width) * pageW;
+
+    let posY       = 0;
+    let remaining  = imgH;
+
+    // Primera página
+    pdf.addImage(imgData, "JPEG", 0, posY, pageW, imgH);
+    remaining -= pageH;
+
+    // Páginas adicionales si el contenido supera una hoja
+    while (remaining > 0) {
+      posY -= pageH;
+      pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, posY, pageW, imgH);
+      remaining -= pageH;
+    }
+
+    pdf.save(`${title}.pdf`);
+  } finally {
+    document.body.removeChild(container);
+  }
 }
 
 // Crea un blob con cabeceras Office XML y lo descarga como .doc
@@ -118,16 +166,24 @@ function NavBar({ onRename, docName }: { onRename: () => void; docName: string }
   const editor = useEditorContext();
   const { openFind, openReplace } = useSearch();
   const { openModal } = useImages();
+  const { settings } = usePageSettings();
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = useCallback(async () => {
     if (!editor) return;
-    triggerPdfDownload(getCleanHtml(editor.getHTML()), docName);
-  };
+    await triggerPdfDownload(
+      getCleanHtml(editor.getHTML()),
+      docName,
+      settings.marginTop,
+      settings.marginBottom,
+      settings.marginLeft,
+      settings.marginRight,
+    );
+  }, [editor, docName, settings]);
 
-  const handleDownloadWord = () => {
+  const handleDownloadWord = useCallback(() => {
     if (!editor) return;
     triggerWordDownload(getCleanHtml(editor.getHTML()), docName);
-  };
+  }, [editor, docName]);
 
   /* Global keyboard shortcuts */
   useEffect(() => {

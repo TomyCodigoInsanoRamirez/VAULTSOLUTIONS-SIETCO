@@ -1,26 +1,116 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary:    #3B82F6;
+  --color-secondary:  #7C4DFF;
+  --color-indigo:     #5965F2;
+  --color-text-main:  #173B6C;
+  --color-text-soft:  #5B7093;
+  --color-bg:         #FFFFFF;
+  --color-surface:    #EEF2FF;
+  --color-border:     #D8E2FA;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text-main);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--color-bg);
+  color: var(--color-text-main);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Placeholder de TipTap */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-text-soft);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Estilos del contenido del editor */
+.tiptap p { margin: 0 0 0.2rem; }
+
+.tiptap ul,
+.tiptap ol { padding-left: 1.5rem; margin: 0.25rem 0; }
+
+.tiptap ul { list-style-type: disc; }
+.tiptap ol { list-style-type: decimal; }
+.tiptap li { margin: 0.1rem 0; }
+
+.tiptap h1 { font-size: 2em;    font-weight: bold; margin: 0.5rem 0; }
+.tiptap h2 { font-size: 1.5em;  font-weight: bold; margin: 0.4rem 0; }
+.tiptap h3 { font-size: 1.17em; font-weight: bold; margin: 0.3rem 0; }
+
+/* Highlight de búsqueda */
+.search-match {
+  background: rgba(59, 130, 246, 0.22);
+  border-radius: 2px;
+  outline: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.search-current {
+  background: rgba(124, 77, 255, 0.32);
+  border-radius: 2px;
+  outline: 2px solid #7C4DFF;
+}
+
+/* Spacer invisible insertado entre páginas — no debe seleccionarse ni destacarse */
+[data-page-spacer] {
+  display: block;
+  user-select: none;
+  pointer-events: none;
+  outline: none;
+  background: transparent;
+}
+
+/* Imágenes insertadas en el editor */
+.editor-image { border-radius: 3px; }
+
+.editor-image--fixed {
+  float: left;
+  margin: 0 14px 10px 0;
+  shape-outside: margin-box;
+}
+
+/* Clearfix para párrafos que contienen imágenes flotantes */
+.tiptap::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* ── Estilos de impresión / exportación a PDF ──────────────────────────── */
+@media print {
+  /* Ocultar todo excepto el contenido del documento */
+  body > *:not(.print-root) { display: none !important; }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* El contenedor del editor ocupa toda la página */
+  .tiptap-print-content {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 25mm 30mm;
+    font-family: Arial, sans-serif;
+    font-size: 12pt;
+    color: #000;
+    page-break-inside: auto;
+  }
+
+  /* Evitar que párrafos y headings se corten en medio */
+  .tiptap p,
+  .tiptap h1,
+  .tiptap h2,
+  .tiptap h3 {
+    page-break-inside: avoid;
+  }
 }

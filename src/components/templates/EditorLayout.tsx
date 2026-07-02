@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorProvider } from "@/context/EditorContext";
 import { PageSettingsProvider } from "@/context/PageSettingsContext";
 import { SearchProvider, useSearch } from "@/context/SearchContext";
@@ -14,7 +14,6 @@ import NavDropdown from "@/components/molecules/NavDropdown";
 
 /* ── NavBar — needs SearchContext + ImagesContext so lives inside providers ─ */
 
-const STATIC_ITEMS_LEFT  = ["Archivo"];
 const STATIC_ITEMS_RIGHT = ["Formato", "Ayuda"];
 
 function NavButton({ label }: { label: string }) {
@@ -30,7 +29,7 @@ function NavButton({ label }: { label: string }) {
   );
 }
 
-function NavBar() {
+function NavBar({ onRename }: { onRename: () => void }) {
   const { openFind, openReplace } = useSearch();
   const { openModal } = useImages();
 
@@ -55,9 +54,15 @@ function NavBar() {
       className="px-3 flex items-center gap-1 shrink-0 overflow-x-auto border-b"
       style={{ backgroundColor: "#EEF2FF", borderColor: "#D8E2FA" }}
     >
-      {STATIC_ITEMS_LEFT.map((item) => (
-        <NavButton key={item} label={item} />
-      ))}
+      <NavDropdown
+        label="Archivo"
+        items={[
+          { label: "Guardar como (.docx)", onClick: () => {}, disabled: true },
+          { label: "Guardar como (PDF)",   onClick: () => {}, disabled: true },
+          { label: "Compartir",            onClick: () => {}, disabled: true },
+          { label: "Cambiar nombre",       onClick: onRename },
+        ]}
+      />
 
       <NavDropdown
         label="Editar"
@@ -70,8 +75,8 @@ function NavBar() {
       <NavDropdown
         label="Insertar"
         items={[
-          { label: "Insertar imagen", onClick: openModal       },
-          { label: "Insertar tabla",  onClick: () => {}        },
+          { label: "Insertar imagen", onClick: openModal },
+          { label: "Insertar tabla",  onClick: () => {}  },
         ]}
       />
 
@@ -85,6 +90,14 @@ function NavBar() {
 /* ── Root layout ────────────────────────────────────────────────────────── */
 
 export default function EditorLayout() {
+  const [docName, setDocName] = useState("Documento sin título");
+  const titleRef = useRef<HTMLInputElement>(null);
+
+  const handleRename = () => {
+    titleRef.current?.select();
+    titleRef.current?.focus();
+  };
+
   return (
     <EditorProvider>
       <PageSettingsProvider>
@@ -98,10 +111,17 @@ export default function EditorLayout() {
                 style={{ background: "linear-gradient(90deg, #3B82F6 0%, #5965F2 50%, #7C4DFF 100%)" }}
               >
                 <span className="text-sm font-semibold tracking-wide">SIETCO</span>
-                <span className="text-xs" style={{ color: "#D8E2FA" }}>Documento sin título</span>
+                <input
+                  ref={titleRef}
+                  value={docName}
+                  onChange={(e) => setDocName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") titleRef.current?.blur(); }}
+                  className="text-xs text-right bg-transparent border-b border-transparent focus:border-white/50 focus:outline-none transition-colors"
+                  style={{ color: "#D8E2FA", minWidth: 160, maxWidth: 300 }}
+                />
               </header>
 
-              <NavBar />
+              <NavBar onRename={handleRename} />
               <Toolbar />
               <DocumentCanvas />
             </div>

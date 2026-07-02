@@ -6,6 +6,7 @@ export interface NavDropdownItem {
   label: string;
   shortcut?: string;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 interface NavDropdownProps {
@@ -87,10 +88,15 @@ export default function NavDropdown({ label, items }: NavDropdownProps) {
           {items.map((item) => (
             <button
               key={item.label}
-              onClick={() => { item.onClick(); setOpen(false); }}
+              onClick={() => { if (!item.disabled) { item.onClick(); setOpen(false); } }}
               className="w-full flex items-center justify-between px-4 py-2 text-sm text-left transition-colors"
-              style={{ color: "#173B6C" }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#EEF2FF")}
+              style={{
+                color: item.disabled ? "#B0BCDA" : "#173B6C",
+                cursor: item.disabled ? "default" : "pointer",
+              }}
+              onMouseEnter={(e) => {
+                if (!item.disabled) e.currentTarget.style.backgroundColor = "#EEF2FF";
+              }}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
             >
               <span>{item.label}</span>

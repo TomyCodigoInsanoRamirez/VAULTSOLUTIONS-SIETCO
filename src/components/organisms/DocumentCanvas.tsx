@@ -183,13 +183,31 @@ function syncSpacers(
   }
 }
 
-/* ── Margin guide lines ─────────────────────────────────────────────────── */
+/* ── Margin guide lines (one set per page) ──────────────────────────────── */
+//
+// Each page card gets its own set of 4 guides positioned with absolute `top`
+// and explicit `height` so they never bleed into adjacent pages or the gap.
+// Labels are shown only on the first page to avoid visual clutter.
 
-function MarginGuides({ s }: { s: PageSettings }) {
+function MarginGuides({
+  s,
+  pageTop,
+  showLabels,
+}: {
+  s:          PageSettings;
+  pageTop:    number;  // px from wrapper top where this page card starts
+  showLabels: boolean;
+}) {
   const t = s.marginTop    * MM;
   const b = s.marginBottom * MM;
   const l = s.marginLeft   * MM;
   const r = s.marginRight  * MM;
+
+  const base: React.CSSProperties = {
+    position: "absolute",
+    pointerEvents: "none",
+    zIndex: 41,
+  };
 
   const chip = (extra: React.CSSProperties): React.CSSProperties => ({
     position: "absolute", fontSize: 10, backgroundColor: "white",
@@ -198,17 +216,60 @@ function MarginGuides({ s }: { s: PageSettings }) {
 
   return (
     <>
-      <div style={{ position:"absolute", top:`${t}px`, left:0, right:0, height:1, background:"rgba(59,130,246,0.55)", borderTop:"1px dashed rgba(59,130,246,0.8)", zIndex:40, pointerEvents:"none" }}>
-        <span style={chip({ top:3, left:"50%", transform:"translateX(-50%)", color:"#3B82F6", border:"1px solid rgba(59,130,246,0.3)" })}>{s.marginTop} mm</span>
+      {/* ── Top margin line ── */}
+      <div style={{
+        ...base,
+        top: pageTop + t, left: 0, right: 0, height: 1,
+        background: "rgba(59,130,246,0.55)",
+        borderTop: "1px dashed rgba(59,130,246,0.8)",
+      }}>
+        {showLabels && (
+          <span style={chip({ top: 3, left: "50%", transform: "translateX(-50%)", color: "#3B82F6", border: "1px solid rgba(59,130,246,0.3)" })}>
+            {s.marginTop} mm
+          </span>
+        )}
       </div>
-      <div style={{ position:"absolute", bottom:`${b}px`, left:0, right:0, height:1, background:"rgba(59,130,246,0.55)", borderBottom:"1px dashed rgba(59,130,246,0.8)", zIndex:40, pointerEvents:"none" }}>
-        <span style={chip({ bottom:3, left:"50%", transform:"translateX(-50%)", color:"#3B82F6", border:"1px solid rgba(59,130,246,0.3)" })}>{s.marginBottom} mm</span>
+
+      {/* ── Bottom margin line ── */}
+      <div style={{
+        ...base,
+        top: pageTop + A4_H - b, left: 0, right: 0, height: 1,
+        background: "rgba(59,130,246,0.55)",
+        borderTop: "1px dashed rgba(59,130,246,0.8)",
+      }}>
+        {showLabels && (
+          <span style={chip({ bottom: 3, left: "50%", transform: "translateX(-50%)", color: "#3B82F6", border: "1px solid rgba(59,130,246,0.3)" })}>
+            {s.marginBottom} mm
+          </span>
+        )}
       </div>
-      <div style={{ position:"absolute", top:0, bottom:0, left:`${l}px`, width:1, background:"rgba(124,77,255,0.55)", borderLeft:"1px dashed rgba(124,77,255,0.8)", zIndex:40, pointerEvents:"none" }}>
-        <span style={chip({ top:"50%", left:4, transform:"translateY(-50%)", color:"#7C4DFF", border:"1px solid rgba(124,77,255,0.3)", writingMode:"vertical-rl", rotate:"180deg" })}>{s.marginLeft} mm</span>
+
+      {/* ── Left margin line ── */}
+      <div style={{
+        ...base,
+        top: pageTop, height: A4_H, left: l, width: 1,
+        background: "rgba(124,77,255,0.55)",
+        borderLeft: "1px dashed rgba(124,77,255,0.8)",
+      }}>
+        {showLabels && (
+          <span style={chip({ top: "50%", left: 4, transform: "translateY(-50%)", color: "#7C4DFF", border: "1px solid rgba(124,77,255,0.3)", writingMode: "vertical-rl", rotate: "180deg" })}>
+            {s.marginLeft} mm
+          </span>
+        )}
       </div>
-      <div style={{ position:"absolute", top:0, bottom:0, right:`${r}px`, width:1, background:"rgba(124,77,255,0.55)", borderRight:"1px dashed rgba(124,77,255,0.8)", zIndex:40, pointerEvents:"none" }}>
-        <span style={chip({ top:"50%", right:4, transform:"translateY(-50%)", color:"#7C4DFF", border:"1px solid rgba(124,77,255,0.3)", writingMode:"vertical-rl" })}>{s.marginRight} mm</span>
+
+      {/* ── Right margin line ── */}
+      <div style={{
+        ...base,
+        top: pageTop, height: A4_H, right: r, width: 1,
+        background: "rgba(124,77,255,0.55)",
+        borderRight: "1px dashed rgba(124,77,255,0.8)",
+      }}>
+        {showLabels && (
+          <span style={chip({ top: "50%", right: 4, transform: "translateY(-50%)", color: "#7C4DFF", border: "1px solid rgba(124,77,255,0.3)", writingMode: "vertical-rl" })}>
+            {s.marginRight} mm
+          </span>
+        )}
       </div>
     </>
   );
@@ -432,8 +493,15 @@ export default function DocumentCanvas() {
           </div>
         ))}
 
-        {/* ── Margin guides (z 40) ── */}
-        {panelOpen && <MarginGuides s={settings} />}
+        {/* ── Margin guides: one set per page (z 41) ── */}
+        {panelOpen && Array.from({ length: pageCount }, (_, i) => (
+          <MarginGuides
+            key={i}
+            s={settings}
+            pageTop={i * (A4_H + PAGE_GAP)}
+            showLabels={i === 0}
+          />
+        ))}
 
         {/* ── Back overlay images (z 2) ── */}
         {images.filter((img) => img.mode === "back").map((img) => (

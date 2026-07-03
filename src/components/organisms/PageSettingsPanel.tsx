@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { X, Minus, Plus } from "lucide-react";
+import { X, Minus, Plus, Clipboard, ClipboardX } from "lucide-react";
 import { usePageSettings, PageSettings } from "@/context/PageSettingsContext";
 import { useEditorContext } from "@/context/EditorContext";
+import { pasteWithFormat, pasteWithoutFormat } from "@/components/molecules/PasteGroup";
 
 // mm → px ratio for A4 preview (80×113px box represents 210×297mm)
 const PX_H = 80 / 210;
@@ -171,6 +172,31 @@ export default function PageSettingsPanel() {
       </div>
 
       <div className="p-4 flex flex-col gap-6">
+
+        {/* ── Portapapeles ───────────────────────────────────── */}
+        <section>
+          <SectionTitle>Portapapeles</SectionTitle>
+          <div className="flex gap-2">
+            <button
+              onClick={() => editor && pasteWithFormat(editor)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded border text-sm transition-colors"
+              style={{ color: "#173B6C", borderColor: "#D8E2FA", backgroundColor: "#EEF2FF" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#3B82F6")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#D8E2FA")}
+            >
+              <Clipboard size={13} /> Pegar
+            </button>
+            <button
+              onClick={() => editor && pasteWithoutFormat(editor)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded border text-sm transition-colors"
+              style={{ color: "#173B6C", borderColor: "#D8E2FA", backgroundColor: "#EEF2FF" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#7C4DFF")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#D8E2FA")}
+            >
+              <ClipboardX size={13} /> Sin formato
+            </button>
+          </div>
+        </section>
 
         {/* ── Márgenes ───────────────────────────────────────── */}
         <section>

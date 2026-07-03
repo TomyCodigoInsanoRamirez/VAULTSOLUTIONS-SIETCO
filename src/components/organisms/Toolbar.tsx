@@ -6,6 +6,7 @@ import FormatGroup from "@/components/molecules/FormatGroup";
 import FontSelector from "@/components/molecules/FontSelector";
 import AlignGroup from "@/components/molecules/AlignGroup";
 import ListGroup from "@/components/molecules/ListGroup";
+import PasteGroup from "@/components/molecules/PasteGroup";
 import Divider from "@/components/atoms/Divider";
 
 export default function Toolbar() {
@@ -84,6 +85,8 @@ export default function Toolbar() {
       <FormatGroup activeFormats={activeFormats} onFormat={handleFormat} />
       <Divider />
       <AlignGroup activeAlign={activeAlign} onAlign={handleAlign} />
+      <Divider />
+      <PasteGroup editor={editor} />
     </div>
   );
 }

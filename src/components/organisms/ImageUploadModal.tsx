@@ -123,7 +123,7 @@ export default function ImageUploadModal() {
     } else {
       editor?.commands.insertContent({
         type: "image",
-        attrs: { src: preview, "data-layout": layout, "data-width": "280" },
+        attrs: { src: preview, layout: layout, width: 280 },
       });
     }
 

@@ -323,12 +323,77 @@ function DraggableOverlay({
     return () => document.removeEventListener("mousedown", onDown);
   }, [selected]);
 
+  /* ── "Detrás": visual behind content + interactive handle strip above it ── */
+  if (img.mode === "back") {
+    return (
+      <>
+        {/* Image: z-2 (behind content). Rises to z-15 while dragging so the
+            user can see where it's landing. pointer-events:none always so the
+            handle strip (z-30) is the only interactive surface. */}
+        <div style={{
+          position: "absolute", top: img.y, left: img.x, width: img.width,
+          zIndex: dragging ? 15 : 2,
+          pointerEvents: "none",
+          opacity: dragging ? 0.75 : 1,
+          outline: selected ? "2px solid #7C4DFF" : "none",
+          outlineOffset: 2, borderRadius: 2,
+        }}>
+          <img src={img.src} alt="" draggable={false}
+            style={{ width: "100%", display: "block", borderRadius: 2 }} />
+        </div>
+
+        {/* Handle strip: always above content (z-30). Dragging from here moves
+            the image. The strip is narrow so it doesn't block much text. */}
+        <div
+          onMouseDown={onMouseDown}
+          style={{
+            position: "absolute",
+            top: img.y, left: img.x, width: img.width,
+            height: 22,
+            zIndex: 30,
+            cursor: dragging ? "grabbing" : "grab",
+            userSelect: "none",
+            background: selected
+              ? "rgba(124,77,255,0.28)"
+              : "rgba(124,77,255,0.13)",
+            borderRadius: "2px 2px 0 0",
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 6px",
+          }}
+        >
+          <span style={{ fontSize: 9, color: "#7C4DFF", fontWeight: 600,
+            letterSpacing: "0.04em", pointerEvents: "none" }}>
+            ⠿ Detrás del texto
+          </span>
+          {selected && (
+            <button
+              data-action="delete"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => removeImage(img.id)}
+              style={{
+                width: 16, height: 16, borderRadius: "50%",
+                border: "1.5px solid white", backgroundColor: "#7C4DFF",
+                color: "white", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 11, lineHeight: 1, padding: 0,
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </>
+    );
+  }
+
+  /* ── "Delante": full interactive div above content ── */
   return (
     <div
       onMouseDown={onMouseDown}
       style={{
         position: "absolute", top: img.y, left: img.x, width: img.width,
-        zIndex: img.mode === "front" ? 20 : 2,
+        zIndex: 20,
         cursor: dragging ? "grabbing" : "grab",
         userSelect: "none",
         outline: selected ? "2px solid #3B82F6" : "2px solid transparent",
@@ -363,7 +428,7 @@ function DraggableOverlay({
             border: "1px solid #D8E2FA", borderRadius: 3,
             padding: "1px 5px", whiteSpace: "nowrap", pointerEvents: "none",
           }}>
-            {img.mode === "front" ? "Delante del texto" : "Detrás del texto"}
+            Delante del texto
           </div>
         </>
       )}

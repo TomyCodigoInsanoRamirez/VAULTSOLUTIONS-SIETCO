@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react";
-import ToolbarButton from "@/components/atoms/ToolbarButton";
+import ToolbarButton from "../atoms/ToolbarButton";
 
 type Align = "left" | "center" | "right" | "justify";
 

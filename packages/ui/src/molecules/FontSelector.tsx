@@ -1,6 +1,6 @@
 "use client";
 
-import ToolbarSelect from "@/components/atoms/ToolbarSelect";
+import ToolbarSelect from "../atoms/ToolbarSelect";
 
 const FONTS = [
   { label: "Arial", value: "Arial" },

@@ -1,7 +1,7 @@
 "use client";
 
 import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
-import ToolbarButton from "@/components/atoms/ToolbarButton";
+import ToolbarButton from "../atoms/ToolbarButton";
 
 interface FormatGroupProps {
   activeFormats: Set<string>;

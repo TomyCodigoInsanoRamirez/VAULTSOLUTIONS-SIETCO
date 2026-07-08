@@ -1,7 +1,7 @@
 "use client";
 
 import { List, ListOrdered, Undo2, Redo2 } from "lucide-react";
-import ToolbarButton from "@/components/atoms/ToolbarButton";
+import { ToolbarButton } from "@sietco/ui";
 
 interface ListGroupProps {
   onCommand: (command: string) => void;

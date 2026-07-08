@@ -10,7 +10,7 @@ import DocumentCanvas from "@/components/organisms/DocumentCanvas";
 import PageSettingsPanel from "@/components/organisms/PageSettingsPanel";
 import SearchPanel from "@/components/organisms/SearchPanel";
 import ImageUploadModal from "@/components/organisms/ImageUploadModal";
-import NavDropdown from "@/components/molecules/NavDropdown";
+import { NavDropdown, AppSwitcher } from "@sietco/ui";
 import { useEditorContext } from "@/context/EditorContext";
 
 /* ── Export helpers ─────────────────────────────────────────────────────── */
@@ -247,7 +247,10 @@ export default function EditorLayout() {
                 className="text-white px-4 py-1.5 flex items-center justify-between shrink-0"
                 style={{ background: "linear-gradient(90deg, #3B82F6 0%, #5965F2 50%, #7C4DFF 100%)" }}
               >
-                <span className="text-sm font-semibold tracking-wide">SIETCO</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-semibold tracking-wide">SIETCO</span>
+                  <AppSwitcher current="word" />
+                </div>
                 <input
                   ref={titleRef}
                   value={docName}

@@ -2,12 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useEditorContext } from "@/context/EditorContext";
-import FormatGroup from "@/components/molecules/FormatGroup";
-import FontSelector from "@/components/molecules/FontSelector";
-import AlignGroup from "@/components/molecules/AlignGroup";
+import { FormatGroup, FontSelector, AlignGroup, Divider } from "@sietco/ui";
 import ListGroup from "@/components/molecules/ListGroup";
 import PasteGroup from "@/components/molecules/PasteGroup";
-import Divider from "@/components/atoms/Divider";
 
 export default function Toolbar() {
   const editor = useEditorContext();

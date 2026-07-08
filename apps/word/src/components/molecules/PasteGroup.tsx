@@ -2,7 +2,7 @@
 
 import { Clipboard, ClipboardX } from "lucide-react";
 import { Editor } from "@tiptap/react";
-import ToolbarButton from "@/components/atoms/ToolbarButton";
+import { ToolbarButton } from "@sietco/ui";
 
 interface PasteGroupProps {
   editor: Editor | null;
